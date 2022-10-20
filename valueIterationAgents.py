@@ -60,9 +60,17 @@ class ValueIterationAgent(ValueEstimationAgent):
         self.runValueIteration()
 
     def runValueIteration(self):
-        # Write value iteration code here
         "*** YOUR CODE HERE ***"
-
+        for _ in range(self.iterations):
+            values = self.values.copy() # effects computeQValue
+            for state in self.mdp.getStates():
+                end = float('-inf') # init to worst possible value
+                for action in self.mdp.getPossibleActions(state):
+                    if end <  self.computeQValueFromValues(state, action):
+                        end = self.computeQValueFromValues(state, action)
+                end = 0 if end == float('-inf') else end
+                values[state] = end # ^^ if nothing found, make 0
+            self.values = values
 
     def getValue(self, state):
         """
@@ -77,7 +85,13 @@ class ValueIterationAgent(ValueEstimationAgent):
           value function stored in self.values.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        value = 0
+        for next, prob in self.mdp.getTransitionStatesAndProbs(state,action):
+            value += (self.mdp.getReward(state,action,next)+(self.values[next]*self.discount))*prob
+        return value
+        # self.mdp.getReward(state,action,next) gets the reward value for that state
+        # self.values[next] gets the value of that given square, multiply it by the discount
+        # multiply everything by the probability
 
     def computeActionFromValues(self, state):
         """
@@ -89,7 +103,14 @@ class ValueIterationAgent(ValueEstimationAgent):
           terminal state, you should return None.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        value, new_action = float('-inf'), None # value should be worst possible action, as it's null
+        myactions = self.mdp.getPossibleActions(state) # get every possible thing
+        if len(myactions) == 0:
+            return None # if there are no actions, then we should fail
+        for action in myactions:
+            if value < self.computeQValueFromValues(state, action): # if our action is better...
+                value, new_action = self.computeQValueFromValues(state, action), action # update
+        return new_action # return best possible from those presented by getPossibleActions()
 
     def getPolicy(self, state):
         return self.computeActionFromValues(state)
